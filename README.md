@@ -70,6 +70,7 @@ release files) lives in `./data` by default — set `DATA_DIR` to move it. Back 
 | `pnpm db:seed`     | Insert a sample project                         |
 | `pnpm setup-env`   | Create/update `.env` (admin password + session secret) |
 | `pnpm hash-password` | Print an `ADMIN_PASSWORD_HASH` for your password |
+| `pnpm pm2:start` … | Run under PM2. See [Keeping it running with PM2](#keeping-it-running-with-pm2-recommended) |
 
 ## How it works
 
@@ -140,7 +141,38 @@ Recommendations:
 - Consider putting `/admin*` behind a Cloudflare Access policy as a second lock.
 - Back up `DATA_DIR`: it holds the database, code snapshots and release files.
 
-Example systemd unit (`/etc/systemd/system/foundry.service`):
+### Keeping it running with PM2 (recommended)
+
+PM2 is included as a dev dependency, so no global install is needed. It runs `next start` directly
+(single instance: SQLite and the login rate limiter live in one process), restarts it on crashes
+with exponential back-off, restarts it if memory passes 1 GB, and writes timestamped logs to `logs/`.
+
+```bash
+pnpm install && pnpm build
+pnpm setup-env                 # once: admin password + session secret
+PORT=3000 pnpm pm2:start       # start in the background and remember it
+pnpm exec pm2 startup          # once: prints a sudo command, run it to start PM2 on boot
+pnpm exec pm2 save             # after startup: remember the process list
+```
+
+| Command               | What it does                                                     |
+| --------------------- | ---------------------------------------------------------------- |
+| `pnpm pm2:status`     | Is it running? Uptime, restarts, memory                          |
+| `pnpm pm2:logs`       | Follow the logs (also in `logs/out.log`, `logs/error.log`)       |
+| `pnpm pm2:restart`    | Restart (picks up `.env` changes)                                |
+| `pnpm pm2:stop`       | Stop the server                                                  |
+| `pnpm update-server`  | Back up `data/`, `git pull`, install, build, restart, health-check |
+
+`GET /api/health` returns `{"status":"ok"}` when the server and database are up. Use it for an
+uptime monitor. `pnpm update-server` keeps the last 10 data backups in `data-backups/`. Expect a
+few seconds of downtime while it restarts.
+
+Settings live in `ecosystem.config.cjs`. `PORT` is read when you run `pm2:start`, and
+`pm2 save`/`resurrect` remember it.
+
+### Alternative: systemd
+
+Example systemd unit (`/etc/systemd/system/foundryvttai.service`):
 
 ```ini
 [Unit]

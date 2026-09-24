@@ -15,9 +15,16 @@
     "db:migrate": "pnpm --filter @foundry/db db:migrate",
     "db:seed": "pnpm --filter @foundry/db db:seed",
     "hash-password": "node scripts/hash-password.mjs",
-    "setup-env": "node scripts/setup-env.mjs"
+    "setup-env": "node scripts/setup-env.mjs",
+    "pm2:start": "pm2 start ecosystem.config.cjs && pm2 save",
+    "pm2:restart": "pm2 reload ecosystem.config.cjs --update-env",
+    "pm2:stop": "pm2 stop foundryvttai",
+    "pm2:logs": "pm2 logs foundryvttai",
+    "pm2:status": "pm2 status",
+    "update-server": "bash scripts/update.sh"
   },
   "devDependencies": {
+    "pm2": "^7.0.4",
     "turbo": "^2.11.3",
     "typescript": "^5.9.3"
   }

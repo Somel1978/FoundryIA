@@ -12,3 +12,7 @@ next-env.d.ts
 
 # Runtime data (SQLite database, uploaded code, release files)
 /data
+
+# PM2 logs and update-script backups
+/logs
+/data-backups
