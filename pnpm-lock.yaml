@@ -20,6 +20,9 @@ importers:
       '@foundry/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@foundry/env':
+        specifier: workspace:*
+        version: link:../../packages/env
       '@foundry/storage':
         specifier: workspace:*
         version: link:../../packages/storage

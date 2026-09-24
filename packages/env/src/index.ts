@@ -1,5 +1,6 @@
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { parseEnv } from "node:util";
 
 let cachedRoot: string | undefined;
 
@@ -33,4 +34,27 @@ export function dataDir(): string {
     : path.join(monorepoRoot(), "data");
   mkdirSync(dir, { recursive: true });
   return dir;
+}
+
+/**
+ * Loads .env files from the monorepo root into process.env (Next.js itself
+ * only reads the ones in apps/web). Existing variables always win, so real
+ * environment variables and apps/web/.env* take precedence. Unlike Next.js,
+ * values are taken literally: no `$VAR` expansion, so passwords may contain `$`.
+ * Returns the files that were read.
+ */
+export function loadRootEnv(): string[] {
+  const mode = process.env.NODE_ENV === "production" ? "production" : "development";
+  const files = [`.env.${mode}.local`, ".env.local", `.env.${mode}`, ".env"];
+  const loaded: string[] = [];
+  for (const name of files) {
+    const file = path.join(monorepoRoot(), name);
+    if (!existsSync(file)) continue;
+    const parsed = parseEnv(readFileSync(file, "utf8"));
+    for (const [key, value] of Object.entries(parsed)) {
+      if (process.env[key] === undefined && value !== undefined) process.env[key] = value;
+    }
+    loaded.push(file);
+  }
+  return loaded;
 }

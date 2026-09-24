@@ -1,14 +1,17 @@
-/** Runs once when the server boots: refuse to start with an insecure config. */
-export function register() {
-  if (process.env.NODE_ENV !== "production") return;
-  const problems: string[] = [];
-  if (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD.length < 12) {
-    problems.push("ADMIN_PASSWORD must be set to at least 12 characters.");
-  }
-  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
-    problems.push("SESSION_SECRET must be set to at least 32 characters.");
-  }
+/** Runs once when the server boots: report config problems loudly. */
+export async function register() {
+  if (process.env.NEXT_RUNTIME !== "nodejs") return;
+  // Repeat here in case the server runs in a different process than the one
+  // that evaluated next.config.ts.
+  const { loadRootEnv } = await import("@foundry/env");
+  const files = loadRootEnv();
+  if (files.length > 0) console.log(`[config] Loaded ${files.join(", ")}`);
+  const { adminConfigProblems } = await import("./lib/admin-config");
+  const problems = adminConfigProblems();
   if (problems.length > 0) {
-    throw new Error(`Refusing to start in production:\n  - ${problems.join("\n  - ")}`);
+    console.error(`[config] Admin login is disabled:\n  - ${problems.join("\n  - ")}`);
+  } else {
+    const how = process.env.ADMIN_PASSWORD_HASH ? "ADMIN_PASSWORD_HASH" : "ADMIN_PASSWORD";
+    console.log(`[config] Admin login enabled (${how}).`);
   }
 }

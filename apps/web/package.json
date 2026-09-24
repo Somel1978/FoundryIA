@@ -7,7 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
-    "typecheck": "next typegen && tsc -p tsconfig.json"
+    "typecheck": "next typegen && tsc -p tsconfig.json",
+    "hash-password": "node scripts/hash-password.mjs"
   },
   "dependencies": {
     "@foundry/db": "workspace:*",
@@ -20,7 +21,8 @@
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "server-only": "^0.0.1",
-    "shiki": "^4.3.3"
+    "shiki": "^4.3.3",
+    "@foundry/env": "workspace:*"
   },
   "devDependencies": {
     "@foundry/tsconfig": "workspace:*",

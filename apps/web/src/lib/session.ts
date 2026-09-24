@@ -8,7 +8,7 @@ export const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 let warned = false;
 
 function secretKey(): Uint8Array {
-  let secret = process.env.SESSION_SECRET;
+  let secret = process.env.SESSION_SECRET?.trim();
   if (!secret || secret.length < 32) {
     if (process.env.NODE_ENV === "production") {
       throw new Error("SESSION_SECRET must be set to at least 32 characters in production.");

@@ -1,4 +1,8 @@
 import type { NextConfig } from "next";
+import { loadRootEnv } from "@foundry/env";
+
+// Next.js only reads .env files from apps/web; also accept the repo-root ones.
+loadRootEnv();
 
 /**
  * Extra hostnames allowed to submit Server Actions, comma-separated

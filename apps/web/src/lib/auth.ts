@@ -1,30 +1,38 @@
 import "server-only";
-import { timingSafeEqual, createHash } from "node:crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { adminConfigProblems, verifyAdminPassword } from "./admin-config";
 import { SESSION_COOKIE, SESSION_MAX_AGE, signSession, verifySession } from "./session";
 
-export function adminPasswordConfigured(): boolean {
-  return Boolean(process.env.ADMIN_PASSWORD);
-}
+export { adminConfigProblems };
 
 export function checkPassword(candidate: string): boolean {
-  const expected = process.env.ADMIN_PASSWORD;
-  if (!expected) return false;
-  // Hash both sides so the comparison is constant-time regardless of length.
-  const a = createHash("sha256").update(candidate).digest();
-  const b = createHash("sha256").update(expected).digest();
-  return timingSafeEqual(a, b);
+  return adminConfigProblems().length === 0 && verifyAdminPassword(candidate);
+}
+
+/**
+ * Whether the browser reached us over HTTPS. Through a Cloudflare Tunnel the
+ * app itself speaks plain HTTP, so look at what the browser saw: the Origin
+ * of the form post, or X-Forwarded-Proto set by cloudflared.
+ */
+async function requestIsHttps(): Promise<boolean> {
+  const h = await headers();
+  const origin = h.get("origin");
+  if (origin) return origin.startsWith("https://");
+  return h.get("x-forwarded-proto")?.split(",")[0]?.trim() === "https";
 }
 
 export async function startSession(): Promise<void> {
+  // A Secure cookie is silently dropped by browsers on plain http://<lan-ip>,
+  // which looks like "the password doesn't work". Match the actual scheme
+  // unless COOKIE_SECURE forces it.
+  const forced = process.env.COOKIE_SECURE;
+  const secure = forced === "true" ? true : forced === "false" ? false : await requestIsHttps();
   const jar = await cookies();
   jar.set(SESSION_COOKIE, await signSession(), {
     httpOnly: true,
     sameSite: "lax",
-    // Cloudflare serves the site over HTTPS, so the cookie is HTTPS-only in
-    // production. Set COOKIE_SECURE=false to sign in over plain HTTP on a LAN.
-    secure: process.env.NODE_ENV === "production" && process.env.COOKIE_SECURE !== "false",
+    secure,
     path: "/",
     maxAge: SESSION_MAX_AGE,
   });

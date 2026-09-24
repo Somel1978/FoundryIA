@@ -13,7 +13,8 @@
     "test": "turbo run test",
     "db:generate": "pnpm --filter @foundry/db db:generate",
     "db:migrate": "pnpm --filter @foundry/db db:migrate",
-    "db:seed": "pnpm --filter @foundry/db db:seed"
+    "db:seed": "pnpm --filter @foundry/db db:seed",
+    "hash-password": "pnpm --filter @foundry/web --silent hash-password"
   },
   "devDependencies": {
     "turbo": "^2.11.3",

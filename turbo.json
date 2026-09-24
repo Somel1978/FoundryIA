@@ -3,6 +3,7 @@
   "globalEnv": [
     "DATA_DIR",
     "ADMIN_PASSWORD",
+    "ADMIN_PASSWORD_HASH",
     "SESSION_SECRET",
     "PORT",
     "ALLOWED_ORIGINS",

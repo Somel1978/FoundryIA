@@ -28,12 +28,23 @@ Requires Node.js 22+ and pnpm 10.
 
 ```bash
 pnpm install
-cp .env.example apps/web/.env.local   # then set ADMIN_PASSWORD and SESSION_SECRET
+cp .env.example .env                  # then set the admin password and SESSION_SECRET
+pnpm hash-password                    # optional: prints an ADMIN_PASSWORD_HASH line for .env
 pnpm db:seed                          # optional: adds a sample public project
 pnpm dev                              # http://localhost:3000
 ```
 
-Sign in at <http://localhost:3000/admin> with `ADMIN_PASSWORD`.
+Sign in at <http://localhost:3000/admin>.
+
+### Can't sign in?
+
+The login page and the server log (`[config] …` at startup) say exactly what's wrong. Common causes:
+
+- **Env file in the wrong place.** Use the repo-root `.env` or `apps/web/.env.local`, then **restart**.
+- **`$` in the password inside `apps/web/.env*`.** Next.js expands `$VAR` there (even in quotes),
+  silently changing the password. Use `pnpm hash-password` → `ADMIN_PASSWORD_HASH`, put it in the
+  repo-root `.env` (read literally), or escape it as `\$`.
+- **Too many attempts.** After 10 failures in 15 minutes that IP is locked out; wait or restart.
 
 The database is migrated automatically on first use. All runtime data (SQLite DB, code snapshots,
 release files) lives in `./data` by default — set `DATA_DIR` to move it. Back that folder up.
@@ -50,6 +61,7 @@ release files) lives in `./data` by default — set `DATA_DIR` to move it. Back 
 | `pnpm db:generate` | Generate a SQL migration after editing `packages/db/src/schema.ts` |
 | `pnpm db:migrate`  | Apply migrations explicitly                     |
 | `pnpm db:seed`     | Insert a sample project                         |
+| `pnpm hash-password` | Print an `ADMIN_PASSWORD_HASH` for your password |
 
 ## How it works
 
@@ -76,12 +88,12 @@ with a persistent disk works. TLS is terminated by Cloudflare; the tunnel talks 
 pnpm install --frozen-lockfile
 pnpm build
 PORT=3000 DATA_DIR=/var/lib/foundry \
-ADMIN_PASSWORD='…' SESSION_SECRET="$(openssl rand -base64 48)" \
+ADMIN_PASSWORD_HASH='scrypt:…' SESSION_SECRET="$(openssl rand -base64 48)" \
 pnpm start
 ```
 
 > `PORT` must be a real environment variable. Next.js binds the port before reading `.env` files.
-> The other settings can also go in `apps/web/.env.local`.
+> The other settings can also go in the repo-root `.env` or `apps/web/.env.local`.
 
 Point the tunnel's ingress at the app, e.g. in your cloudflared config:
 
@@ -94,8 +106,8 @@ ingress:
 
 What the app does to work well behind the tunnel:
 
-- **Refuses to serve in production** (every request returns 500 and the log says why) unless
-  `ADMIN_PASSWORD` is ≥ 12 chars and `SESSION_SECRET` is ≥ 32 chars.
+- **Admin login stays disabled** until the password is ≥ 12 chars and `SESSION_SECRET` is ≥ 32 chars.
+  The login page and startup log list what's missing; the public site keeps working.
 - **Real client IPs** come from `CF-Connecting-IP`. They're used for rate limits: 10 failed admin
   logins per 15 min, and 10 issues / 10 fixes per hour for each visitor IP.
 - **Redirects** use the public hostname that cloudflared forwards (`Host` + `X-Forwarded-Proto`),
@@ -105,8 +117,8 @@ What the app does to work well behind the tunnel:
   your plan allows.
 - **Security headers** (HSTS, `X-Frame-Options: DENY`, `nosniff`, referrer policy) on every
   response. Admin pages are sent `Cache-Control: private, no-store` so Cloudflare never caches them.
-- **Admin cookie** is `Secure` in production. That's correct through Cloudflare's HTTPS, but it means
-  you can't sign in over plain `http://<lan-ip>:3000`. Set `COOKIE_SECURE=false` if you need to.
+- **Admin cookie** is marked `Secure` whenever the browser is on HTTPS (through Cloudflare), and
+  not on plain `http://<lan-ip>:3000`, so signing in works both ways. Override with `COOKIE_SECURE`.
 - **Server Actions** accept the public hostname automatically, because cloudflared forwards the
   original `Host`. If your tunnel overrides it (`httpHostHeader`), list the public hostname in
   `ALLOWED_ORIGINS`.
@@ -127,7 +139,7 @@ After=network.target
 [Service]
 WorkingDirectory=/opt/foundry
 Environment=NODE_ENV=production PORT=3000 DATA_DIR=/var/lib/foundry
-EnvironmentFile=/etc/foundry.env   # ADMIN_PASSWORD=… and SESSION_SECRET=…
+EnvironmentFile=/etc/foundry.env   # ADMIN_PASSWORD_HASH=… and SESSION_SECRET=…
 ExecStart=/usr/bin/env pnpm start
 Restart=on-failure
 User=foundry
