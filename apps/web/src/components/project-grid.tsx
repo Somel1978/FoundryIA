@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Search, Tag } from "lucide-react";
+import { ArrowUpRight, Download, Search, Tag } from "lucide-react";
 import { useMemo, useState } from "react";
+import { formatCount } from "@/lib/format";
 import { ProjectThumbnail } from "./project-thumbnail";
 
 export interface ProjectCard {
@@ -12,6 +13,7 @@ export interface ProjectCard {
   thumbnailMediaId: string | null;
   latestTag: string | null;
   updated: string;
+  downloads: number;
 }
 
 export function ProjectGrid({ projects }: { projects: ProjectCard[] }) {
@@ -65,7 +67,14 @@ export function ProjectGrid({ projects }: { projects: ProjectCard[] }) {
                     <ArrowUpRight className="size-5 shrink-0 text-muted transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-accent" />
                   </div>
                   <p className="mt-1.5 line-clamp-2 flex-1 text-sm text-muted">{p.description || "No description yet."}</p>
-                  <p className="mt-4 text-xs text-muted">Updated {p.updated}</p>
+                  <div className="mt-4 flex items-center justify-between text-xs text-muted">
+                    <span>Updated {p.updated}</span>
+                    {p.latestTag && (
+                      <span className="inline-flex items-center gap-1" title="Release downloads">
+                        <Download className="size-3.5" /> {formatCount(p.downloads)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </Link>
             </li>

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CircleDot, Download, FolderGit2, GitPullRequestArrow, Plus } from "lucide-react";
-import { and, count, desc, eq, fixSuggestions, getDb, issues, projects, releaseAssets, sql } from "@foundry/db";
+import { and, count, desc, eq, fixSuggestions, getDb, issues, projects } from "@foundry/db";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
 import { EmptyState, PageHeader, VisibilityBadge } from "@/components/ui";
-import { formatDate } from "@/lib/format";
+import { projectDownloadTotals } from "@/lib/downloads";
+import { formatCount, formatDate } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Admin" };
 
@@ -32,14 +33,15 @@ export default function AdminDashboard() {
       .groupBy(issues.projectId)
       .all(),
   );
-  const downloads = db.select({ n: sql<number>`coalesce(sum(${releaseAssets.downloadCount}), 0)` }).from(releaseAssets).get()?.n ?? 0;
+  const perProject = projectDownloadTotals();
+  const downloads = [...perProject.values()].reduce((a, b) => a + b, 0);
   const sum = (m: Map<string, number>) => [...m.values()].reduce((a, b) => a + b, 0);
 
   const stats = [
     { label: "Projects", value: list.length, icon: FolderGit2 },
     { label: "Issues to review", value: sum(newIssues), icon: CircleDot },
     { label: "Pending fixes", value: sum(pendingFixes), icon: GitPullRequestArrow },
-    { label: "Downloads", value: downloads, icon: Download },
+    { label: "Downloads", value: formatCount(downloads), icon: Download },
   ];
 
   return (
@@ -101,6 +103,9 @@ export default function AdminDashboard() {
                   </span>
                   <span className={`flex items-center gap-1.5 ${fixes ? "text-amber-600 dark:text-amber-400" : ""}`} title="Pending fixes">
                     <GitPullRequestArrow className="size-4" /> {fixes}
+                  </span>
+                  <span className="flex items-center gap-1.5" title="Release downloads">
+                    <Download className="size-4" /> {formatCount(perProject.get(p.id) ?? 0)}
                   </span>
                   <span className="hidden w-24 text-right md:block">{formatDate(p.updatedAt)}</span>
                 </div>

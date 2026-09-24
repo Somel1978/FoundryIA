@@ -43,3 +43,14 @@ export function decodeSegments(segments: string[]): string | null {
     return null;
   }
 }
+
+/** 950 → "950", 1234 → "1.2k", 2500000 → "2.5M". */
+export function formatCount(n: number): string {
+  if (n < 1000) return String(n);
+  if (n < 1_000_000) return `${(n / 1000).toFixed(n < 10_000 ? 1 : 0).replace(/\.0$/, "")}k`;
+  return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+}
+
+export function downloadsLabel(n: number): string {
+  return `${formatCount(n)} download${n === 1 ? "" : "s"}`;
+}

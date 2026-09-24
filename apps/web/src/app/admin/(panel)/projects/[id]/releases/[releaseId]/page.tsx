@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui";
 import { AssetUploader } from "@/components/uploaders";
 import { deleteRelease, removeReleaseAsset, setReleasePublished, updateRelease } from "@/lib/actions/admin";
 import { MAX_UPLOAD_BYTES } from "@/lib/config";
-import { formatBytes, formatDate } from "@/lib/format";
+import { downloadsLabel, formatBytes, formatDate } from "@/lib/format";
 import { getProjectById } from "@/lib/projects";
 
 export default async function AdminReleasePage({ params }: PageProps<"/admin/projects/[id]/releases/[releaseId]">) {
@@ -50,7 +50,12 @@ export default async function AdminReleasePage({ params }: PageProps<"/admin/pro
       )}
 
       <section className="card p-6">
-        <h2 className="mb-4 font-semibold">Files</h2>
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <h2 className="font-semibold">Files</h2>
+          <span className="text-sm text-muted">
+            {downloadsLabel(release.assets.reduce((sum, a) => sum + a.downloadCount, 0))} in total
+          </span>
+        </div>
         {release.assets.length > 0 && (
           <ul className="mb-4 divide-y divide-border overflow-hidden rounded-xl border border-border">
             {release.assets.map((a) => (
@@ -59,7 +64,7 @@ export default async function AdminReleasePage({ params }: PageProps<"/admin/pro
                   {a.filename}
                 </a>
                 <span className="text-xs text-muted">
-                  {formatBytes(a.size)} · {a.downloadCount} downloads
+                  {formatBytes(a.size)} · {downloadsLabel(a.downloadCount)}
                 </span>
                 <form action={removeReleaseAsset.bind(null, a.id)}>
                   <ConfirmButton message={`Delete ${a.filename}?`} className="btn btn-danger px-2 py-1 text-xs">

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Download, Package, Settings2 } from "lucide-react";
+import { projectDownloadTotals } from "@/lib/downloads";
 import { and, count, desc, eq, getDb, issues, releases } from "@foundry/db";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
 import { Badge, VisibilityBadge } from "@/components/ui";
 import { isAdmin } from "@/lib/auth";
-import { formatDate } from "@/lib/format";
+import { downloadsLabel, formatDate } from "@/lib/format";
 import { findViewableProject, getViewableProject } from "@/lib/projects";
 import { ProjectTabs } from "./project-tabs";
 
@@ -31,6 +32,7 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
       .get()?.n ?? 0;
   const published = and(eq(releases.projectId, project.id), eq(releases.published, true));
   const releaseCount = db.select({ n: count() }).from(releases).where(published).get()?.n ?? 0;
+  const downloads = projectDownloadTotals({ publishedOnly: true }).get(project.id) ?? 0;
   const latest = db.select().from(releases).where(published).orderBy(desc(releases.publishedAt)).get();
 
   return (
@@ -48,6 +50,11 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
               <Badge color="violet">
                 <Package className="size-3" /> {latest.tag}
               </Badge>
+            )}
+            {releaseCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-xs text-muted">
+                <Download className="size-3.5" /> {downloadsLabel(downloads)}
+              </span>
             )}
             <span className="text-xs text-muted">Updated {formatDate(project.updatedAt)}</span>
           </div>

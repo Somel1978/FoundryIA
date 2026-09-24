@@ -3,7 +3,9 @@ import { desc, eq, getDb, releases } from "@foundry/db";
 import { ActionForm, SubmitButton } from "@/components/action-form";
 import { Badge, EmptyState } from "@/components/ui";
 import { createRelease } from "@/lib/actions/admin";
-import { formatDate } from "@/lib/format";
+import { Download } from "lucide-react";
+import { releaseDownloadTotals } from "@/lib/downloads";
+import { downloadsLabel, formatDate } from "@/lib/format";
 import { getProjectById } from "@/lib/projects";
 
 export default async function AdminReleasesPage({ params }: PageProps<"/admin/projects/[id]/releases">) {
@@ -14,6 +16,7 @@ export default async function AdminReleasesPage({ params }: PageProps<"/admin/pr
     with: { assets: { columns: { id: true } } },
   }).sync();
 
+  const totals = releaseDownloadTotals(project.id);
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
       <section>
@@ -31,6 +34,9 @@ export default async function AdminReleasesPage({ params }: PageProps<"/admin/pr
                   <Badge color="blue">{r.tag}</Badge>
                   <span className="flex-1 font-medium">{r.title}</span>
                   <span className="text-xs text-muted">{r.assets.length} files</span>
+                  <span className="inline-flex items-center gap-1 text-xs text-muted">
+                    <Download className="size-3.5" /> {downloadsLabel(totals.get(r.id) ?? 0)}
+                  </span>
                   {r.published ? (
                     <Badge color="green">Published {formatDate(r.publishedAt)}</Badge>
                   ) : (

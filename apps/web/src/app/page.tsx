@@ -2,6 +2,7 @@ import { Boxes, Bug, Download, GitPullRequest } from "lucide-react";
 import { and, desc, eq, getDb, releases } from "@foundry/db";
 import { ProjectGrid } from "@/components/project-grid";
 import { EmptyState } from "@/components/ui";
+import { projectDownloadTotals } from "@/lib/downloads";
 import { formatDate } from "@/lib/format";
 import { listPublicProjects } from "@/lib/projects";
 
@@ -16,7 +17,9 @@ const features = [
 
 export default function HomePage() {
   const db = getDb();
+  const downloads = projectDownloadTotals({ publishedOnly: true });
   const projects = listPublicProjects().map((p) => ({
+    downloads: downloads.get(p.id) ?? 0,
     slug: p.slug,
     name: p.name,
     description: p.description,
