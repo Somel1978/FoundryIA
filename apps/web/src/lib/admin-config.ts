@@ -2,7 +2,7 @@ import "server-only";
 import { scryptSync, timingSafeEqual, createHash } from "node:crypto";
 
 /**
- * Admin credentials come from either:
+ * Admin credentials come from either (`pnpm setup-env` writes the hash to .env):
  *   ADMIN_PASSWORD_HASH  – output of `pnpm hash-password` (recommended; safe
  *                          for any characters, nothing in plain text), or
  *   ADMIN_PASSWORD       – the password itself.
@@ -62,7 +62,7 @@ export function adminConfigProblems(): string[] {
     }
   } else if (!plain) {
     problems.push(
-      "No admin password configured. Set ADMIN_PASSWORD_HASH (run `pnpm hash-password`) or ADMIN_PASSWORD in apps/web/.env.local, the repo-root .env, or the environment.",
+      "No admin password configured. Run `pnpm setup-env` in the project folder to create the .env file, then restart the server.",
     );
   } else if (process.env.NODE_ENV === "production" && plain.length < 12) {
     problems.push(
@@ -71,7 +71,7 @@ export function adminConfigProblems(): string[] {
   }
   const secret = process.env.SESSION_SECRET?.trim();
   if (process.env.NODE_ENV === "production" && (!secret || secret.length < 32)) {
-    problems.push("SESSION_SECRET must be set to at least 32 characters (e.g. `openssl rand -base64 48`).");
+    problems.push("SESSION_SECRET must be set to at least 32 characters. `pnpm setup-env` generates one.");
   }
   return problems;
 }

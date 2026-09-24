@@ -28,19 +28,22 @@ Requires Node.js 22+ and pnpm 10.
 
 ```bash
 pnpm install
-cp .env.example .env                  # then set the admin password and SESSION_SECRET
-pnpm hash-password                    # optional: prints an ADMIN_PASSWORD_HASH line for .env
+pnpm setup-env                        # asks for an admin password, creates .env
 pnpm db:seed                          # optional: adds a sample public project
 pnpm dev                              # http://localhost:3000
 ```
 
 Sign in at <http://localhost:3000/admin>.
 
+`.env` holds secrets, so it's git-ignored and never in the repository. Each machine needs its own:
+run `pnpm setup-env` there. It writes a hashed admin password and a random `SESSION_SECRET`. Run it
+again any time to change the password. (Files starting with a dot are hidden; use `ls -a` to see it.)
+
 ### Can't sign in?
 
 The login page and the server log (`[config] …` at startup) say exactly what's wrong. Common causes:
 
-- **Env file in the wrong place.** Use the repo-root `.env` or `apps/web/.env.local`, then **restart**.
+- **No `.env` yet / env file in the wrong place.** Run `pnpm setup-env` in the project folder, then **restart**.
 - **`$` in the password inside `apps/web/.env*`.** Next.js expands `$VAR` there (even in quotes),
   silently changing the password. Use `pnpm hash-password` → `ADMIN_PASSWORD_HASH`, put it in the
   repo-root `.env` (read literally), or escape it as `\$`.
@@ -61,6 +64,7 @@ release files) lives in `./data` by default — set `DATA_DIR` to move it. Back 
 | `pnpm db:generate` | Generate a SQL migration after editing `packages/db/src/schema.ts` |
 | `pnpm db:migrate`  | Apply migrations explicitly                     |
 | `pnpm db:seed`     | Insert a sample project                         |
+| `pnpm setup-env`   | Create/update `.env` (admin password + session secret) |
 | `pnpm hash-password` | Print an `ADMIN_PASSWORD_HASH` for your password |
 
 ## How it works

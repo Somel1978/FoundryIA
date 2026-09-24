@@ -14,7 +14,8 @@
     "db:generate": "pnpm --filter @foundry/db db:generate",
     "db:migrate": "pnpm --filter @foundry/db db:migrate",
     "db:seed": "pnpm --filter @foundry/db db:seed",
-    "hash-password": "pnpm --filter @foundry/web --silent hash-password"
+    "hash-password": "node scripts/hash-password.mjs",
+    "setup-env": "node scripts/setup-env.mjs"
   },
   "devDependencies": {
     "turbo": "^2.11.3",
