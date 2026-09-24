@@ -4,6 +4,7 @@ import { ConfirmButton } from "@/components/action-form";
 import { Badge, EmptyState } from "@/components/ui";
 import { CodeUploader } from "@/components/uploaders";
 import { removeSnapshot, setCurrentSnapshot } from "@/lib/actions/admin";
+import { MAX_UPLOAD_BYTES } from "@/lib/config";
 import { formatBytes, formatDateTime } from "@/lib/format";
 import { getProjectById } from "@/lib/projects";
 
@@ -20,7 +21,7 @@ export default async function ProjectCodePage({ params }: PageProps<"/admin/proj
     <div className="space-y-8">
       <section className="card p-6">
         <h2 className="mb-4 font-semibold">Upload code</h2>
-        <CodeUploader projectId={project.id} />
+        <CodeUploader projectId={project.id} maxBytes={MAX_UPLOAD_BYTES} />
       </section>
 
       <section>

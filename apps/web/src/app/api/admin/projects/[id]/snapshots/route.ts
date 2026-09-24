@@ -9,6 +9,7 @@ import {
   type InputFile,
 } from "@foundry/storage";
 import { isAdmin } from "@/lib/auth";
+import { MAX_UPLOAD_BYTES } from "@/lib/config";
 
 /**
  * Uploads a new code snapshot, either as a single .zip (`archive`) or as a
@@ -16,6 +17,9 @@ import { isAdmin } from "@/lib/auth";
  */
 export async function POST(request: Request, ctx: RouteContext<"/api/admin/projects/[id]/snapshots">) {
   if (!(await isAdmin())) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_UPLOAD_BYTES) {
+    return Response.json({ error: `Upload exceeds ${MAX_UPLOAD_BYTES / 1024 / 1024} MB.` }, { status: 413 });
+  }
   const { id } = await ctx.params;
   const db = getDb();
   const project = db.select().from(projects).where(eq(projects.id, id)).get();

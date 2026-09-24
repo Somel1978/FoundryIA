@@ -67,14 +67,73 @@ release files) lives in `./data` by default — set `DATA_DIR` to move it. Back 
 - **Auth.** Single admin password; sessions are signed JWT cookies (`SESSION_SECRET`). Admin pages,
   server actions and upload endpoints each verify the session. Public forms include a honeypot field.
 
-## Deploying
+## Deploying (behind a Cloudflare Tunnel)
 
-Any Node host with a persistent disk works (a VPS, Fly.io volume, Railway volume, …):
+`pnpm start` listens on **all interfaces (`0.0.0.0`)**, port `PORT` (default 3000). Any Node 22 host
+with a persistent disk works. TLS is terminated by Cloudflare; the tunnel talks plain HTTP to the app.
 
 ```bash
 pnpm install --frozen-lockfile
 pnpm build
-DATA_DIR=/var/lib/foundry ADMIN_PASSWORD=… SESSION_SECRET=… pnpm start
+PORT=3000 DATA_DIR=/var/lib/foundry \
+ADMIN_PASSWORD='…' SESSION_SECRET="$(openssl rand -base64 48)" \
+pnpm start
+```
+
+> `PORT` must be a real environment variable. Next.js binds the port before reading `.env` files.
+> The other settings can also go in `apps/web/.env.local`.
+
+Point the tunnel's ingress at the app, e.g. in your cloudflared config:
+
+```yaml
+ingress:
+  - hostname: code.example.com
+    service: http://<app-host>:3000
+  - service: http_status:404
+```
+
+What the app does to work well behind the tunnel:
+
+- **Refuses to serve in production** (every request returns 500 and the log says why) unless
+  `ADMIN_PASSWORD` is ≥ 12 chars and `SESSION_SECRET` is ≥ 32 chars.
+- **Real client IPs** come from `CF-Connecting-IP`. They're used for rate limits: 10 failed admin
+  logins per 15 min, and 10 issues / 10 fixes per hour for each visitor IP.
+- **Redirects** use the public hostname that cloudflared forwards (`Host` + `X-Forwarded-Proto`),
+  not the internal `localhost:PORT`.
+- **Uploads** are capped at `MAX_UPLOAD_MB` (default 100) to match Cloudflare's request-body limit
+  (100 MB Free/Pro, 200 MB Business, 500 MB Enterprise). For bigger release files, raise it only if
+  your plan allows.
+- **Security headers** (HSTS, `X-Frame-Options: DENY`, `nosniff`, referrer policy) on every
+  response. Admin pages are sent `Cache-Control: private, no-store` so Cloudflare never caches them.
+- **Admin cookie** is `Secure` in production. That's correct through Cloudflare's HTTPS, but it means
+  you can't sign in over plain `http://<lan-ip>:3000`. Set `COOKIE_SECURE=false` if you need to.
+- **Server Actions** accept the public hostname automatically, because cloudflared forwards the
+  original `Host`. If your tunnel overrides it (`httpHostHeader`), list the public hostname in
+  `ALLOWED_ORIGINS`.
+
+Recommendations:
+- If the tunnel runs on the same machine, you can firewall port 3000 so only cloudflared reaches it.
+  The app listens on all interfaces, but the tunnel is the only thing that needs it.
+- Consider putting `/admin*` behind a Cloudflare Access policy as a second lock.
+- Back up `DATA_DIR`: it holds the database, code snapshots and release files.
+
+Example systemd unit (`/etc/systemd/system/foundry.service`):
+
+```ini
+[Unit]
+Description=Foundry
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/foundry
+Environment=NODE_ENV=production PORT=3000 DATA_DIR=/var/lib/foundry
+EnvironmentFile=/etc/foundry.env   # ADMIN_PASSWORD=… and SESSION_SECRET=…
+ExecStart=/usr/bin/env pnpm start
+Restart=on-failure
+User=foundry
+
+[Install]
+WantedBy=multi-user.target
 ```
 
 Serverless platforms without a persistent filesystem are not supported as-is, because the database

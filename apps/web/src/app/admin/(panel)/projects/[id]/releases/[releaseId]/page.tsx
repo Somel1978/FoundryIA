@@ -5,6 +5,7 @@ import { ActionForm, ConfirmButton, SubmitButton } from "@/components/action-for
 import { Badge } from "@/components/ui";
 import { AssetUploader } from "@/components/uploaders";
 import { deleteRelease, removeReleaseAsset, setReleasePublished, updateRelease } from "@/lib/actions/admin";
+import { MAX_UPLOAD_BYTES } from "@/lib/config";
 import { formatBytes, formatDate } from "@/lib/format";
 import { getProjectById } from "@/lib/projects";
 
@@ -69,7 +70,7 @@ export default async function AdminReleasePage({ params }: PageProps<"/admin/pro
             ))}
           </ul>
         )}
-        <AssetUploader releaseId={release.id} />
+        <AssetUploader releaseId={release.id} maxBytes={MAX_UPLOAD_BYTES} />
       </section>
 
       <section>

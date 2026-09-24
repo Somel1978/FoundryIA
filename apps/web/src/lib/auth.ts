@@ -22,7 +22,9 @@ export async function startSession(): Promise<void> {
   jar.set(SESSION_COOKIE, await signSession(), {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    // Cloudflare serves the site over HTTPS, so the cookie is HTTPS-only in
+    // production. Set COOKIE_SECURE=false to sign in over plain HTTP on a LAN.
+    secure: process.env.NODE_ENV === "production" && process.env.COOKIE_SECURE !== "false",
     path: "/",
     maxAge: SESSION_MAX_AGE,
   });

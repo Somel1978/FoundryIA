@@ -3,11 +3,13 @@ import { revalidatePath } from "next/cache";
 import { eq, getDb, releaseAssets, releases } from "@foundry/db";
 import { guessContentType, saveReleaseAsset } from "@foundry/storage";
 import { isAdmin } from "@/lib/auth";
-
-const MAX_ASSET_BYTES = 1024 * 1024 * 1024; // 1 GB
+import { MAX_UPLOAD_BYTES } from "@/lib/config";
 
 export async function POST(request: Request, ctx: RouteContext<"/api/admin/releases/[id]/assets">) {
   if (!(await isAdmin())) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_UPLOAD_BYTES) {
+    return Response.json({ error: `Upload exceeds ${MAX_UPLOAD_BYTES / 1024 / 1024} MB.` }, { status: 413 });
+  }
   const { id } = await ctx.params;
   const db = getDb();
   const release = db.select().from(releases).where(eq(releases.id, id)).get();
@@ -17,9 +19,6 @@ export async function POST(request: Request, ctx: RouteContext<"/api/admin/relea
   if (files.length === 0) return Response.json({ error: "Choose at least one file." }, { status: 400 });
 
   for (const file of files) {
-    if (file.size > MAX_ASSET_BYTES) {
-      return Response.json({ error: `${file.name} is larger than 1 GB.` }, { status: 400 });
-    }
     const filename = path.basename(file.name.replace(/\\/g, "/")).slice(0, 255) || "file";
     const asset = db
       .insert(releaseAssets)

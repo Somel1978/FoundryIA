@@ -3,9 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
+function tooLarge(files: File[], maxBytes: number): string | null {
+  const total = files.reduce((sum, f) => sum + f.size, 0);
+  if (total <= maxBytes) return null;
+  const mb = (n: number) => `${Math.ceil(n / 1024 / 1024)} MB`;
+  return `This upload is ${mb(total)}; the limit is ${mb(maxBytes)} (Cloudflare caps request size).`;
+}
+
 async function send(url: string, fd: FormData): Promise<string | null> {
   const res = await fetch(url, { method: "POST", body: fd });
   if (res.ok) return null;
+  if (res.status === 413) return "Upload too large for the server or Cloudflare limit.";
   const data = (await res.json().catch(() => null)) as { error?: string } | null;
   return data?.error ?? `Upload failed (${res.status})`;
 }
@@ -17,7 +25,7 @@ function Status({ error, success }: { error: string | null; success: string | nu
 }
 
 /** Upload a project's source as a .zip or by picking a local folder. */
-export function CodeUploader({ projectId }: { projectId: string }) {
+export function CodeUploader({ projectId, maxBytes }: { projectId: string; maxBytes: number }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [mode, setMode] = useState<"zip" | "folder">("zip");
@@ -36,10 +44,14 @@ export function CodeUploader({ projectId }: { projectId: string }) {
     if (mode === "zip") {
       const file = (form.elements.namedItem("archive") as HTMLInputElement).files?.[0];
       if (!file) return setError("Choose a .zip file.");
+      const big = tooLarge([file], maxBytes);
+      if (big) return setError(big);
       fd.set("archive", file);
     } else {
       const files = Array.from((form.elements.namedItem("folder") as HTMLInputElement).files ?? []);
       if (files.length === 0) return setError("Choose a folder.");
+      const big = tooLarge(files, maxBytes);
+      if (big) return setError(big);
       for (const f of files) {
         fd.append("files", f);
         fd.append("paths", f.webkitRelativePath || f.name);
@@ -102,7 +114,7 @@ export function CodeUploader({ projectId }: { projectId: string }) {
   );
 }
 
-export function AssetUploader({ releaseId }: { releaseId: string }) {
+export function AssetUploader({ releaseId, maxBytes }: { releaseId: string; maxBytes: number }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [busy, setBusy] = useState(false);
@@ -116,6 +128,8 @@ export function AssetUploader({ releaseId }: { releaseId: string }) {
     const input = e.currentTarget.elements.namedItem("files") as HTMLInputElement;
     const files = Array.from(input.files ?? []);
     if (files.length === 0) return setError("Choose at least one file.");
+    const big = tooLarge(files, maxBytes);
+    if (big) return setError(big);
     const fd = new FormData();
     for (const f of files) fd.append("files", f);
     setBusy(true);

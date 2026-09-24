@@ -5,7 +5,16 @@ import { redirect } from "next/navigation";
 import { and, eq, fixSuggestions, getDb, issues, max, snapshots } from "@foundry/db";
 import { readSnapshotFile, UnsafePathError } from "@foundry/storage";
 import { FormError, handleForm, isSpam, readEmail, readRaw, readString, type FormState } from "../forms";
+import { clientIp } from "../client-ip";
 import { canSuggest, findViewableProject } from "../projects";
+import { rateLimit } from "../rate-limit";
+
+async function throttle(kind: string) {
+  // 10 submissions per visitor per hour and kind.
+  if (!rateLimit(`${kind}:${await clientIp()}`, 10, 60 * 60_000)) {
+    throw new FormError("You've sent a lot of suggestions recently. Please try again later.");
+  }
+}
 
 async function suggestableProject(slug: string) {
   const project = await findViewableProject(slug);
@@ -16,6 +25,7 @@ async function suggestableProject(slug: string) {
 export async function submitIssue(slug: string, _prev: FormState, fd: FormData): Promise<FormState> {
   return handleForm(async () => {
     const project = await suggestableProject(slug);
+    await throttle("issue");
     const title = readString(fd, "title", { required: true, max: 200, label: "Title" });
     const body = readString(fd, "body", { required: true, max: 20_000, label: "Description" });
     const authorName = readString(fd, "authorName", { required: true, max: 100, label: "Name" });
@@ -69,6 +79,7 @@ export async function submitFix(slug: string, _prev: FormState, fd: FormData): P
       context: 3,
     });
 
+    await throttle("fix");
     if (!isSpam(fd)) {
       db.insert(fixSuggestions)
         .values({

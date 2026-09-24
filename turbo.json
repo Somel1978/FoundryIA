@@ -1,6 +1,14 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalEnv": ["DATA_DIR", "ADMIN_PASSWORD", "SESSION_SECRET"],
+  "globalEnv": [
+    "DATA_DIR",
+    "ADMIN_PASSWORD",
+    "SESSION_SECRET",
+    "PORT",
+    "ALLOWED_ORIGINS",
+    "MAX_UPLOAD_MB",
+    "COOKIE_SECURE"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
