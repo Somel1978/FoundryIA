@@ -1,0 +1,78 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --color-accent: oklch(0.58 0.19 262);
+  --color-accent-strong: oklch(0.5 0.2 262);
+}
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+  body {
+    @apply bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800;
+  }
+  .btn-primary {
+    @apply border-transparent bg-accent text-white hover:bg-accent-strong dark:border-transparent dark:bg-accent dark:hover:bg-accent-strong;
+  }
+  .btn-danger {
+    @apply border-red-300 text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950;
+  }
+  .input {
+    @apply w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none placeholder:text-zinc-400 focus:border-accent focus:ring-2 focus:ring-accent/20 dark:border-zinc-700 dark:bg-zinc-950;
+  }
+  .label {
+    @apply mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300;
+  }
+  .hint {
+    @apply mt-1 text-xs text-zinc-500;
+  }
+  .link {
+    @apply text-accent hover:underline;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium;
+  }
+}
+
+/* Shiki dual-theme output (defaultColor: false emits only CSS variables). */
+.shiki,
+.shiki span {
+  color: var(--shiki-light);
+  background-color: transparent !important;
+}
+@media (prefers-color-scheme: dark) {
+  .shiki,
+  .shiki span {
+    color: var(--shiki-dark);
+  }
+}
+
+/* Line numbers for highlighted code. */
+.code-view pre {
+  @apply overflow-x-auto py-3 text-[13px] leading-5;
+  counter-reset: line;
+}
+.code-view code {
+  @apply block min-w-max;
+}
+.code-view .line {
+  @apply inline-block w-full pr-4;
+}
+.code-view .line::before {
+  counter-increment: line;
+  content: counter(line);
+  @apply mr-4 inline-block w-12 pr-2 text-right text-zinc-400 select-none dark:text-zinc-600;
+}

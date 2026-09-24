@@ -1,0 +1,23 @@
+{
+  "name": "@foundry/storage",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "tsx --test src/*.test.ts"
+  },
+  "dependencies": {
+    "@foundry/env": "workspace:*",
+    "fflate": "^0.8.2"
+  },
+  "devDependencies": {
+    "@foundry/tsconfig": "workspace:*",
+    "@types/node": "^22.18.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

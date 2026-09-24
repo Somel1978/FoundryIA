@@ -1,0 +1,4 @@
+{
+  "extends": "@foundry/tsconfig/library.json",
+  "include": ["src"]
+}

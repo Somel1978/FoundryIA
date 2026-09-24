@@ -1,0 +1,14 @@
+node_modules
+.turbo
+.next
+dist
+out
+coverage
+*.tsbuildinfo
+.env
+.env.local
+.env*.local
+next-env.d.ts
+
+# Runtime data (SQLite database, uploaded code, release files)
+/data

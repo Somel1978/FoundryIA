@@ -1,0 +1,17 @@
+{
+  "name": "@foundry/env",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@foundry/tsconfig": "workspace:*",
+    "@types/node": "^22.18.0",
+    "typescript": "^5.9.3"
+  }
+}
