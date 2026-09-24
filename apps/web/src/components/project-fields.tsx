@@ -42,7 +42,7 @@ export function ProjectFields({ project }: { project?: Project }) {
           ).map(([value, title, hint]) => (
             <label
               key={value}
-              className="flex cursor-pointer gap-3 rounded-lg border border-zinc-300 p-3 has-checked:border-accent has-checked:bg-accent/5 dark:border-zinc-700"
+              className="flex cursor-pointer gap-3 rounded-lg border border-border p-3 transition has-checked:border-accent has-checked:bg-accent/10"
             >
               <input
                 type="radio"
@@ -53,7 +53,7 @@ export function ProjectFields({ project }: { project?: Project }) {
               />
               <span>
                 <span className="block text-sm font-medium">{title}</span>
-                <span className="block text-xs text-zinc-500">{hint}</span>
+                <span className="block text-xs text-muted">{hint}</span>
               </span>
             </label>
           ))}

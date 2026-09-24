@@ -23,7 +23,7 @@ export default async function SuggestFixPage({ params, searchParams }: PageProps
     <div>
       <div className="mb-4">
         <h2 className="text-lg font-semibold">Suggest a fix</h2>
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-muted">
           Editing{" "}
           <Link href={`/p/${project.slug}/tree/${encodePath(file.path)}`} className="link font-mono">
             {file.path}

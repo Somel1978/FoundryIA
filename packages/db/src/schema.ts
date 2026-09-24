@@ -17,6 +17,9 @@ export type Visibility = (typeof VISIBILITY)[number];
 export const ISSUE_STATUS = ["open", "accepted", "rejected", "closed"] as const;
 export type IssueStatus = (typeof ISSUE_STATUS)[number];
 
+export const MEDIA_KIND = ["image", "video", "embed"] as const;
+export type MediaKind = (typeof MEDIA_KIND)[number];
+
 export const FIX_STATUS = ["pending", "applied", "rejected"] as const;
 export type FixStatus = (typeof FIX_STATUS)[number];
 
@@ -29,6 +32,8 @@ export const projects = sqliteTable("projects", {
   /** Whether visitors can open issues / propose fixes on a public project. */
   acceptSuggestions: integer("accept_suggestions", { mode: "boolean" }).notNull().default(true),
   currentSnapshotId: text("current_snapshot_id"),
+  /** Image shown as the project's card thumbnail / cover (a project_media id). */
+  thumbnailMediaId: text("thumbnail_media_id"),
   createdAt: createdAt(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
     .notNull()
@@ -82,6 +87,28 @@ export const releaseAssets = sqliteTable(
     createdAt: createdAt(),
   },
   (t) => [index("release_assets_release_idx").on(t.releaseId)],
+);
+
+/** Images, videos and embedded (YouTube/Vimeo) videos shown on a project's page. */
+export const projectMedia = sqliteTable(
+  "project_media",
+  {
+    id: id(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: MEDIA_KIND }).notNull(),
+    /** Original file name (uploads only). */
+    filename: text("filename").notNull().default(""),
+    contentType: text("content_type").notNull().default(""),
+    size: integer("size").notNull().default(0),
+    /** Embed URL (kind = "embed" only). */
+    url: text("url").notNull().default(""),
+    caption: text("caption").notNull().default(""),
+    position: integer("position").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [index("project_media_project_idx").on(t.projectId)],
 );
 
 /** Issues suggested by visitors. */
@@ -138,6 +165,7 @@ export const fixSuggestions = sqliteTable(
 
 export const projectsRelations = relations(projects, ({ many }) => ({
   snapshots: many(snapshots),
+  media: many(projectMedia),
   releases: many(releases),
   issues: many(issues),
   fixSuggestions: many(fixSuggestions),
@@ -145,6 +173,10 @@ export const projectsRelations = relations(projects, ({ many }) => ({
 
 export const snapshotsRelations = relations(snapshots, ({ one }) => ({
   project: one(projects, { fields: [snapshots.projectId], references: [projects.id] }),
+}));
+
+export const projectMediaRelations = relations(projectMedia, ({ one }) => ({
+  project: one(projects, { fields: [projectMedia.projectId], references: [projects.id] }),
 }));
 
 export const releasesRelations = relations(releases, ({ one, many }) => ({
@@ -169,5 +201,6 @@ export type Project = typeof projects.$inferSelect;
 export type Snapshot = typeof snapshots.$inferSelect;
 export type Release = typeof releases.$inferSelect;
 export type ReleaseAsset = typeof releaseAssets.$inferSelect;
+export type ProjectMedia = typeof projectMedia.$inferSelect;
 export type Issue = typeof issues.$inferSelect;
 export type FixSuggestion = typeof fixSuggestions.$inferSelect;

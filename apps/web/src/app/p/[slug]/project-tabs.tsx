@@ -1,5 +1,6 @@
 "use client";
 
+import { Code2, CircleDot, Package } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Tabs } from "@/components/ui";
 
@@ -15,9 +16,9 @@ export function ProjectTabs({ slug, issueCount, releaseCount }: { slug: string; 
     <Tabs
       active={active}
       tabs={[
-        { key: "code", label: "Code", href: base },
-        { key: "issues", label: "Issues", href: `${base}/issues`, count: issueCount },
-        { key: "releases", label: "Releases", href: `${base}/releases`, count: releaseCount },
+        { key: "code", label: "Overview & code", href: base, icon: Code2 },
+        { key: "issues", label: "Issues", href: `${base}/issues`, count: issueCount, icon: CircleDot },
+        { key: "releases", label: "Releases", href: `${base}/releases`, count: releaseCount, icon: Package },
       ]}
     />
   );

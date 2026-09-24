@@ -1,5 +1,6 @@
 "use client";
 
+import { ImagePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
@@ -68,13 +69,13 @@ export function CodeUploader({ projectId, maxBytes }: { projectId: string; maxBy
 
   return (
     <form ref={formRef} onSubmit={onSubmit} className="space-y-4">
-      <div className="inline-flex rounded-lg border border-zinc-300 p-0.5 text-sm dark:border-zinc-700">
+      <div className="inline-flex rounded-lg border border-border p-0.5 text-sm">
         {(["zip", "folder"] as const).map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => setMode(m)}
-            className={`rounded-md px-3 py-1 ${mode === m ? "bg-zinc-200 font-medium dark:bg-zinc-800" : "text-zinc-500"}`}
+            className={`rounded-md px-3 py-1 ${mode === m ? "bg-surface-2 font-medium" : "text-muted"}`}
           >
             {m === "zip" ? ".zip archive" : "Folder"}
           </button>
@@ -149,5 +150,68 @@ export function AssetUploader({ releaseId, maxBytes }: { releaseId: string; maxB
       </button>
       <Status error={error} success={success} />
     </form>
+  );
+}
+
+/** Drag & drop (or click) upload of gallery images and videos. */
+export function MediaUploader({ projectId, maxBytes }: { projectId: string; maxBytes: number }) {
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  async function upload(files: File[]) {
+    setError(null);
+    setSuccess(null);
+    if (files.length === 0) return;
+    const big = tooLarge(files, maxBytes);
+    if (big) return setError(big);
+    const fd = new FormData();
+    for (const f of files) fd.append("files", f);
+    setBusy(true);
+    const err = await send(`/api/admin/projects/${projectId}/media`, fd);
+    setBusy(false);
+    if (inputRef.current) inputRef.current.value = "";
+    if (err) return setError(err);
+    setSuccess(`${files.length} file(s) added.`);
+    router.refresh();
+  }
+
+  return (
+    <div>
+      <label
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          void upload(Array.from(e.dataTransfer.files));
+        }}
+        className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-8 text-center transition ${
+          dragging ? "border-accent bg-accent/10" : "border-border hover:border-accent/50 hover:bg-surface-2"
+        } ${busy ? "pointer-events-none opacity-60" : ""}`}
+      >
+        <ImagePlus className="mb-2 size-7 text-accent" />
+        <span className="text-sm font-medium">{busy ? "Uploading…" : "Drop images or videos here, or click to choose"}</span>
+        <span className="mt-1 text-xs text-muted">JPG, PNG, GIF, WebP, AVIF · MP4, WebM, MOV</span>
+        <input
+          ref={inputRef}
+          name="media"
+          type="file"
+          multiple
+          accept="image/jpeg,image/png,image/gif,image/webp,image/avif,video/mp4,video/webm,video/quicktime,video/ogg"
+          className="sr-only"
+          onChange={(e) => void upload(Array.from(e.currentTarget.files ?? []))}
+        />
+      </label>
+      <div className="mt-2 min-h-5">
+        <Status error={error} success={success} />
+      </div>
+    </div>
   );
 }

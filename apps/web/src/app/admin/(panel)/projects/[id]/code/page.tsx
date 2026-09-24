@@ -29,7 +29,7 @@ export default async function ProjectCodePage({ params }: PageProps<"/admin/proj
         {list.length === 0 ? (
           <EmptyState title="No code uploaded yet" />
         ) : (
-          <ul className="card divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="card divide-y divide-border">
             {list.map((s) => {
               const live = s.id === project.currentSnapshotId;
               return (
@@ -39,7 +39,7 @@ export default async function ProjectCodePage({ params }: PageProps<"/admin/proj
                       <span className="truncate font-medium">{s.message}</span>
                       {live && <Badge color="green">Live</Badge>}
                     </div>
-                    <div className="text-xs text-zinc-500">
+                    <div className="text-xs text-muted">
                       {formatDateTime(s.createdAt)} · {s.fileCount} files · {formatBytes(s.totalBytes)}
                     </div>
                   </div>

@@ -15,7 +15,7 @@ const project = db
   .insert(projects)
   .values({
     slug,
-    name: "Hello Foundry",
+    name: "Hello FoundryVTTAI",
     description: "A tiny sample project created by the seed script.",
     visibility: "public",
   })
@@ -25,7 +25,7 @@ const project = db
 const snapshot = db.insert(snapshots).values({ projectId: project.id, message: "Initial import" }).returning().get();
 
 const stats = await writeSnapshot(snapshot.id, [
-  { path: "README.md", data: strToU8("# Hello Foundry\n\nA sample project. Try suggesting a fix!\n") },
+  { path: "README.md", data: strToU8("# Hello FoundryVTTAI\n\nA sample project. Try suggesting a fix!\n") },
   {
     path: "src/greet.ts",
     data: strToU8('export function greet(name: string): string {\n  return "Helo, " + name + "!";\n}\n'),

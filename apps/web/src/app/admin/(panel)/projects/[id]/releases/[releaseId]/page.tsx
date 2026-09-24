@@ -44,7 +44,7 @@ export default async function AdminReleasePage({ params }: PageProps<"/admin/pro
         </div>
       </div>
       {release.published && project.visibility !== "public" && (
-        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
+        <p className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
           This release is published, but the project is private, so visitors can&apos;t see it yet.
         </p>
       )}
@@ -52,13 +52,13 @@ export default async function AdminReleasePage({ params }: PageProps<"/admin/pro
       <section className="card p-6">
         <h2 className="mb-4 font-semibold">Files</h2>
         {release.assets.length > 0 && (
-          <ul className="mb-4 divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+          <ul className="mb-4 divide-y divide-border overflow-hidden rounded-xl border border-border">
             {release.assets.map((a) => (
               <li key={a.id} className="flex items-center gap-3 px-4 py-2 text-sm">
                 <a href={`/downloads/${a.id}`} className="link flex-1 truncate font-mono">
                   {a.filename}
                 </a>
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-muted">
                   {formatBytes(a.size)} · {a.downloadCount} downloads
                 </span>
                 <form action={removeReleaseAsset.bind(null, a.id)}>

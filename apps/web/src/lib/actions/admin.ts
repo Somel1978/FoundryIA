@@ -11,7 +11,9 @@ import {
   getDb,
   ISSUE_STATUS,
   issues,
+  max,
   ne,
+  projectMedia,
   projects,
   releaseAssets,
   releases,
@@ -20,8 +22,9 @@ import {
   type IssueStatus,
   type Visibility,
 } from "@foundry/db";
-import { deleteReleaseAsset, deleteSnapshot, deriveSnapshot, readSnapshotFile } from "@foundry/storage";
+import { deleteMedia, deleteReleaseAsset, deleteSnapshot, deriveSnapshot, readSnapshotFile } from "@foundry/storage";
 import { requireAdmin } from "../auth";
+import { parseEmbed } from "../embed";
 import { slugify } from "../format";
 import { FormError, handleForm, readString, type FormState } from "../forms";
 
@@ -92,10 +95,94 @@ export async function deleteProject(projectId: string): Promise<void> {
     .innerJoin(releases, eq(releases.id, releaseAssets.releaseId))
     .where(eq(releases.projectId, projectId))
     .all();
+  const media = db.select({ id: projectMedia.id }).from(projectMedia).where(eq(projectMedia.projectId, projectId)).all();
   db.delete(projects).where(eq(projects.id, projectId)).run();
-  await Promise.all([...snaps.map((s) => deleteSnapshot(s.id)), ...assets.map((a) => deleteReleaseAsset(a.id))]);
+  await Promise.all([
+    ...snaps.map((s) => deleteSnapshot(s.id)),
+    ...assets.map((a) => deleteReleaseAsset(a.id)),
+    ...media.map((m) => deleteMedia(m.id)),
+  ]);
   refreshAll();
   redirect("/admin");
+}
+
+// ---------------------------------------------------------------------------
+// Media gallery
+// ---------------------------------------------------------------------------
+
+function projectMediaItem(projectId: string, mediaId: string) {
+  return getDb()
+    .select()
+    .from(projectMedia)
+    .where(and(eq(projectMedia.id, mediaId), eq(projectMedia.projectId, projectId)))
+    .get();
+}
+
+export async function addMediaEmbed(projectId: string, _prev: FormState, fd: FormData): Promise<FormState> {
+  await requireAdmin();
+  return handleForm(() => {
+    const embed = parseEmbed(readString(fd, "url", { required: true, max: 500, label: "Video link" }));
+    if (!embed) throw new FormError("Paste a YouTube or Vimeo link.");
+    const caption = readString(fd, "caption", { max: 300 });
+    const db = getDb();
+    const position =
+      (db.select({ n: max(projectMedia.position) }).from(projectMedia).where(eq(projectMedia.projectId, projectId)).get()?.n ?? -1) + 1;
+    db.insert(projectMedia).values({ projectId, kind: "embed", url: embed.embedUrl, caption, position }).run();
+    refreshAll();
+    return { success: "Video added." };
+  });
+}
+
+export async function updateMediaCaption(projectId: string, mediaId: string, fd: FormData): Promise<void> {
+  await requireAdmin();
+  const caption = readString(fd, "caption", { max: 300 });
+  getDb()
+    .update(projectMedia)
+    .set({ caption })
+    .where(and(eq(projectMedia.id, mediaId), eq(projectMedia.projectId, projectId)))
+    .run();
+  refreshAll();
+}
+
+export async function moveMedia(projectId: string, mediaId: string, direction: "up" | "down"): Promise<void> {
+  await requireAdmin();
+  const db = getDb();
+  const list = db
+    .select()
+    .from(projectMedia)
+    .where(eq(projectMedia.projectId, projectId))
+    .orderBy(projectMedia.position, projectMedia.createdAt)
+    .all();
+  const i = list.findIndex((m) => m.id === mediaId);
+  const j = direction === "up" ? i - 1 : i + 1;
+  if (i < 0 || j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j]!, list[i]!];
+  db.transaction((tx) => {
+    list.forEach((m, position) => tx.update(projectMedia).set({ position }).where(eq(projectMedia.id, m.id)).run());
+  });
+  refreshAll();
+}
+
+export async function setProjectThumbnail(projectId: string, mediaId: string | null): Promise<void> {
+  await requireAdmin();
+  if (mediaId && projectMediaItem(projectId, mediaId)?.kind !== "image") return;
+  getDb().update(projects).set({ thumbnailMediaId: mediaId }).where(eq(projects.id, projectId)).run();
+  refreshAll();
+}
+
+export async function removeMedia(projectId: string, mediaId: string): Promise<void> {
+  await requireAdmin();
+  const db = getDb();
+  if (!projectMediaItem(projectId, mediaId)) return;
+  db.transaction((tx) => {
+    tx.delete(projectMedia).where(eq(projectMedia.id, mediaId)).run();
+    tx.update(projects)
+      .set({ thumbnailMediaId: null })
+      .where(and(eq(projects.id, projectId), eq(projects.thumbnailMediaId, mediaId)))
+      .run();
+  });
+  await deleteMedia(mediaId);
+  refreshAll();
 }
 
 // ---------------------------------------------------------------------------

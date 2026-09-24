@@ -1,12 +1,16 @@
-# Foundry
+# FoundryVTTAI
 
-A self-hosted portfolio for your code projects.
+The self-hosted home for FoundryVTTAI's code projects.
 
 **Public site** — visitors can browse your public projects, read the code with syntax highlighting,
 download the source, suggest issues, propose fixes by editing a file in the browser, and download
 the releases you've published.
 
-**Admin area** (`/admin`) — create projects, switch them between public and private, upload code
+Each project page has a cover thumbnail and a gallery of images and videos (uploads or
+YouTube/Vimeo links) right below the description.
+
+**Admin area** (`/admin`) — create projects, switch them between public and private, manage the
+image/video gallery and thumbnail, upload code
 (a `.zip` or a local folder), manage releases and their downloadable files, moderate issues, and
 review suggested fixes as diffs and apply them with one click.
 
@@ -14,7 +18,7 @@ review suggested fixes as diffs and apply them with one click.
 
 | Path               | What                                                                 |
 | ------------------ | -------------------------------------------------------------------- |
-| `apps/web`         | Next.js 16 (App Router, Server Actions) + Tailwind CSS v4 + Shiki    |
+| `apps/web`         | Next.js 16 (App Router, Server Actions) + Tailwind CSS v4 + Shiki + Lucide |
 | `packages/db`      | Drizzle ORM schema, migrations and client (SQLite via better-sqlite3) |
 | `packages/storage` | On-disk storage for code snapshots and release files (zip-safe)      |
 | `packages/env`     | Shared path resolution (monorepo root, data directory)              |
@@ -77,6 +81,9 @@ release files) lives in `./data` by default — set `DATA_DIR` to move it. Back 
   against the snapshot they saw. Applying it creates a new live snapshot. If the code moved on in
   the meantime, the diff is re-applied as a patch and conflicts are reported instead of overwriting.
 - **Issues** are hidden until you choose to list them publicly, and you can attach a public response.
+- **Media.** Images (JPG/PNG/GIF/WebP/AVIF) and videos (MP4/WebM/MOV) are verified by their file
+  signature, not their name; SVG and HTML are rejected. Videos stream with seeking (HTTP Range).
+  The first uploaded image becomes the thumbnail; star another to change it.
 - **Releases** start as drafts; attach files, then publish. Download counts are tracked.
 - **Visibility.** Private projects (and their files, releases and downloads) return 404 to visitors;
   while signed in as admin you can preview them on the public pages.
@@ -137,7 +144,7 @@ Example systemd unit (`/etc/systemd/system/foundry.service`):
 
 ```ini
 [Unit]
-Description=Foundry
+Description=FoundryVTTAI
 After=network.target
 
 [Service]

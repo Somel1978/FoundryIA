@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
+import { ProjectThumbnail } from "@/components/project-thumbnail";
 import { and, count, eq, fixSuggestions, getDb, issues } from "@foundry/db";
 import { VisibilityBadge } from "@/components/ui";
 import { getProjectById } from "@/lib/projects";
@@ -23,12 +25,24 @@ export default async function AdminProjectLayout({ children, params }: LayoutPro
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
-          <VisibilityBadge visibility={project.visibility} />
+        <div className="flex min-w-0 items-center gap-4">
+          <ProjectThumbnail
+            name={project.name}
+            mediaId={project.thumbnailMediaId}
+            className="aspect-video w-20 shrink-0 rounded-lg border border-border"
+                      initialsClassName="text-sm"
+          />
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-semibold">{project.name}</h1>
+            <div className="mt-1 flex items-center gap-2">
+              <VisibilityBadge visibility={project.visibility} />
+              <span className="font-mono text-xs text-muted">/p/{project.slug}</span>
+            </div>
+          </div>
         </div>
         <Link href={`/p/${project.slug}`} className="btn">
-          View {project.visibility === "public" ? "public page" : "preview"} ↗
+          <ExternalLink className="size-4" />
+          {project.visibility === "public" ? "Public page" : "Preview"}
         </Link>
       </div>
       <AdminProjectTabs projectId={project.id} counts={{ issues: issueCount, fixes: fixCount }} />

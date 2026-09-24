@@ -21,16 +21,16 @@ export default async function AdminReleasesPage({ params }: PageProps<"/admin/pr
         {list.length === 0 ? (
           <EmptyState title="No releases yet" />
         ) : (
-          <ul className="card divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="card divide-y divide-border">
             {list.map((r) => (
               <li key={r.id}>
                 <Link
                   href={`/admin/projects/${project.id}/releases/${r.id}`}
-                  className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
+                  className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-2"
                 >
                   <Badge color="blue">{r.tag}</Badge>
                   <span className="flex-1 font-medium">{r.title}</span>
-                  <span className="text-xs text-zinc-500">{r.assets.length} files</span>
+                  <span className="text-xs text-muted">{r.assets.length} files</span>
                   {r.published ? (
                     <Badge color="green">Published {formatDate(r.publishedAt)}</Badge>
                   ) : (

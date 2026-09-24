@@ -71,3 +71,29 @@ describe("snapshots", () => {
     assert.throws(() => storage.snapshotDir("../x"), UnsafePathError);
   });
 });
+
+describe("media", () => {
+  test("sniffs allowed formats from magic bytes", () => {
+    const pad = (b: number[]) => new Uint8Array([...b, ...new Array(16).fill(0)]);
+    assert.equal(storage.sniffMedia(pad([0xff, 0xd8, 0xff, 0xe0]))?.contentType, "image/jpeg");
+    assert.equal(storage.sniffMedia(pad([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))?.contentType, "image/png");
+    assert.equal(storage.sniffMedia(strToU8("RIFF\0\0\0\0WEBPVP8 ...."))?.contentType, "image/webp");
+    assert.equal(storage.sniffMedia(strToU8("\0\0\0\x18ftypisom...."))?.kind, "video");
+    assert.equal(storage.sniffMedia(pad([0x1a, 0x45, 0xdf, 0xa3]))?.contentType, "video/webm");
+  });
+
+  test("rejects SVG, HTML and unknown data", () => {
+    assert.equal(storage.sniffMedia(strToU8('<svg xmlns="http://www.w3.org/2000/svg"><script/></svg>')), null);
+    assert.equal(storage.sniffMedia(strToU8("<!doctype html><script>alert(1)</script>")), null);
+    assert.equal(storage.sniffMedia(new Uint8Array(4)), null);
+  });
+
+  test("stores, ranges and deletes media", async () => {
+    await storage.saveMedia("m1", strToU8("0123456789"));
+    assert.equal(storage.mediaSize("m1"), 10);
+    const text = await new Response(storage.mediaStream("m1", { start: 2, end: 5 })).text();
+    assert.equal(text, "2345");
+    await storage.deleteMedia("m1");
+    assert.equal(storage.mediaSize("m1"), null);
+  });
+});

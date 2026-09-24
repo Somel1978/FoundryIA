@@ -16,7 +16,7 @@ export default async function IssuesPage({ params }: PageProps<"/p/[slug]/issues
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <p className="text-sm text-zinc-500">Issues are published after review.</p>
+        <p className="text-sm text-muted">Issues are published after review.</p>
         {canSuggest(project) && (
           <Link href={`/p/${project.slug}/issues/new`} className="btn btn-primary">
             Suggest an issue
@@ -26,16 +26,16 @@ export default async function IssuesPage({ params }: PageProps<"/p/[slug]/issues
       {list.length === 0 ? (
         <EmptyState title="No issues yet" />
       ) : (
-        <ul className="card divide-y divide-zinc-200 dark:divide-zinc-800">
+        <ul className="card divide-y divide-border">
           {list.map((issue) => (
             <li key={issue.id}>
               <Link
                 href={`/p/${project.slug}/issues/${issue.number}`}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2"
               >
                 <IssueStatusBadge status={issue.status} />
                 <span className="flex-1 font-medium">{issue.title}</span>
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-muted">
                   #{issue.number} · {issue.authorName} · {formatDate(issue.createdAt)}
                 </span>
               </Link>

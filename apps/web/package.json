@@ -10,18 +10,21 @@
     "typecheck": "next typegen && tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
     "@foundry/db": "workspace:*",
+    "@foundry/env": "workspace:*",
     "@foundry/storage": "workspace:*",
     "diff": "^9.0.0",
     "jose": "^6.2.3",
+    "lucide-react": "^1.48.0",
     "next": "^16.3.6",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "server-only": "^0.0.1",
-    "shiki": "^4.3.3",
-    "@foundry/env": "workspace:*"
+    "shiki": "^4.3.3"
   },
   "devDependencies": {
     "@foundry/tsconfig": "workspace:*",

@@ -1,14 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { and, count, eq, getDb, issues, releases } from "@foundry/db";
-import { VisibilityBadge } from "@/components/ui";
+import { Download, Package, Settings2 } from "lucide-react";
+import { and, count, desc, eq, getDb, issues, releases } from "@foundry/db";
+import { ProjectThumbnail } from "@/components/project-thumbnail";
+import { Badge, VisibilityBadge } from "@/components/ui";
 import { isAdmin } from "@/lib/auth";
+import { formatDate } from "@/lib/format";
 import { findViewableProject, getViewableProject } from "@/lib/projects";
 import { ProjectTabs } from "./project-tabs";
 
 export async function generateMetadata({ params }: LayoutProps<"/p/[slug]">): Promise<Metadata> {
   const project = await findViewableProject((await params).slug);
-  return project ? { title: project.name, description: project.description } : {};
+  if (!project) return {};
+  return {
+    title: project.name,
+    description: project.description,
+    openGraph: project.thumbnailMediaId ? { images: [`/media/${project.thumbnailMediaId}`] } : undefined,
+  };
 }
 
 export default async function ProjectLayout({ children, params }: LayoutProps<"/p/[slug]">) {
@@ -21,38 +29,51 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
       .from(issues)
       .where(and(eq(issues.projectId, project.id), eq(issues.isPublic, true), eq(issues.status, "open")))
       .get()?.n ?? 0;
-  const releaseCount =
-    db
-      .select({ n: count() })
-      .from(releases)
-      .where(and(eq(releases.projectId, project.id), eq(releases.published, true)))
-      .get()?.n ?? 0;
+  const published = and(eq(releases.projectId, project.id), eq(releases.published, true));
+  const releaseCount = db.select({ n: count() }).from(releases).where(published).get()?.n ?? 0;
+  const latest = db.select().from(releases).where(published).orderBy(desc(releases.publishedAt)).get();
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <section className="mb-8 grid gap-6 md:grid-cols-[minmax(0,20rem)_1fr] md:items-center md:gap-10">
+        <ProjectThumbnail
+          name={project.name}
+          mediaId={project.thumbnailMediaId}
+          className="aspect-video w-full rounded-2xl border border-border shadow-xl shadow-black/10"
+        />
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              <Link href={`/p/${project.slug}`}>{project.name}</Link>
-            </h1>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
             {project.visibility !== "public" && <VisibilityBadge visibility={project.visibility} />}
+            {latest && (
+              <Badge color="violet">
+                <Package className="size-3" /> {latest.tag}
+              </Badge>
+            )}
+            <span className="text-xs text-muted">Updated {formatDate(project.updatedAt)}</span>
           </div>
-          {project.description && <p className="mt-1 max-w-3xl text-zinc-500">{project.description}</p>}
+          <h1 className="text-3xl font-bold sm:text-4xl">
+            <Link href={`/p/${project.slug}`}>{project.name}</Link>
+          </h1>
+          {project.description && <p className="mt-3 max-w-2xl text-lg text-muted">{project.description}</p>}
+          <div className="mt-6 flex flex-wrap gap-2">
+            {latest && (
+              <Link href={`/p/${project.slug}/releases`} className="btn btn-primary">
+                <Package className="size-4" /> Get {latest.tag}
+              </Link>
+            )}
+            {project.currentSnapshotId && (
+              <a href={`/p/${project.slug}/archive`} className="btn">
+                <Download className="size-4" /> Source .zip
+              </a>
+            )}
+            {admin && (
+              <Link href={`/admin/projects/${project.id}`} className="btn btn-ghost">
+                <Settings2 className="size-4" /> Manage
+              </Link>
+            )}
+          </div>
         </div>
-        <div className="flex gap-2">
-          {project.currentSnapshotId && (
-            <a href={`/p/${project.slug}/archive`} className="btn">
-              Download source
-            </a>
-          )}
-          {admin && (
-            <Link href={`/admin/projects/${project.id}`} className="btn">
-              Manage
-            </Link>
-          )}
-        </div>
-      </div>
+      </section>
       <ProjectTabs slug={project.slug} issueCount={issueCount} releaseCount={releaseCount} />
       {children}
     </div>

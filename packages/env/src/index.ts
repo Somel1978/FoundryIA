@@ -12,7 +12,7 @@ let cachedRoot: string | undefined;
  */
 export function monorepoRoot(): string {
   if (cachedRoot) return cachedRoot;
-  let dir = process.cwd();
+  let dir = /* turbopackIgnore: true */ process.cwd();
   while (true) {
     if (existsSync(path.join(dir, "pnpm-workspace.yaml"))) {
       cachedRoot = dir;
@@ -20,7 +20,7 @@ export function monorepoRoot(): string {
     }
     const parent = path.dirname(dir);
     if (parent === dir) {
-      cachedRoot = process.cwd();
+      cachedRoot = /* turbopackIgnore: true */ process.cwd();
       return cachedRoot;
     }
     dir = parent;
@@ -48,9 +48,9 @@ export function loadRootEnv(): string[] {
   const files = [`.env.${mode}.local`, ".env.local", `.env.${mode}`, ".env"];
   const loaded: string[] = [];
   for (const name of files) {
-    const file = path.join(monorepoRoot(), name);
-    if (!existsSync(file)) continue;
-    const parsed = parseEnv(readFileSync(file, "utf8"));
+    const file = path.join(/* turbopackIgnore: true */ monorepoRoot(), name);
+    if (!existsSync(/* turbopackIgnore: true */ file)) continue;
+    const parsed = parseEnv(readFileSync(/* turbopackIgnore: true */ file, "utf8"));
     for (const [key, value] of Object.entries(parsed)) {
       if (process.env[key] === undefined && value !== undefined) process.env[key] = value;
     }

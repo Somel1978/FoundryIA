@@ -27,7 +27,7 @@ export default async function AdminFixPage({ params }: PageProps<"/admin/project
           ← Fix suggestions
         </Link>
         <h2 className="text-xl font-semibold">{fix.title}</h2>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
           <FixStatusBadge status={fix.status} />
           <span className="font-mono">{fix.filePath}</span>· by {fix.authorName}
           {fix.authorEmail && (
@@ -48,7 +48,7 @@ export default async function AdminFixPage({ params }: PageProps<"/admin/project
       <DiffView diff={fix.diff} />
 
       {fix.status === "applied" && (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300">
+        <p className="rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
           Fix applied — it&apos;s part of the live code.{" "}
           <Link href={`/admin/projects/${project.id}/code`} className="underline">
             View snapshots
@@ -57,7 +57,7 @@ export default async function AdminFixPage({ params }: PageProps<"/admin/project
       )}
 
       {outdated && (
-        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
+        <p className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
           The live code changed since this fix was suggested. Applying it will re-apply the diff on top of the current
           version and fail if it conflicts.
         </p>
@@ -67,7 +67,7 @@ export default async function AdminFixPage({ params }: PageProps<"/admin/project
         {fix.status === "pending" && (
           <ActionForm action={applyFix.bind(null, fix.id)} className="card space-y-4 p-5">
             <h3 className="font-semibold">Apply</h3>
-            <p className="text-sm text-zinc-500">Creates a new live snapshot of the code with this change.</p>
+            <p className="text-sm text-muted">Creates a new live snapshot of the code with this change.</p>
             <textarea name="adminNote" className="input min-h-20" placeholder="Note (optional)" />
             <SubmitButton pendingText="Applying…">Apply fix</SubmitButton>
           </ActionForm>
@@ -84,7 +84,7 @@ export default async function AdminFixPage({ params }: PageProps<"/admin/project
               Reject
             </SubmitButton>
           ) : (
-            <p className="text-sm text-zinc-500">Already applied.</p>
+            <p className="text-sm text-muted">Already applied.</p>
           )}
         </ActionForm>
       </div>

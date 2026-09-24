@@ -25,9 +25,9 @@ export default async function AdminIssuePage({ params }: PageProps<"/admin/proje
           ← Issues
         </Link>
         <h2 className="text-xl font-semibold">
-          {issue.title} <span className="font-normal text-zinc-400">#{issue.number}</span>
+          {issue.title} <span className="font-normal text-muted">#{issue.number}</span>
         </h2>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
           <IssueStatusBadge status={issue.status} />
           by {issue.authorName}
           {issue.authorEmail && (

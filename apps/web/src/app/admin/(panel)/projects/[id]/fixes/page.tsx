@@ -16,17 +16,17 @@ export default async function AdminFixesPage({ params }: PageProps<"/admin/proje
   if (list.length === 0) return <EmptyState title="No fixes suggested yet" />;
 
   return (
-    <ul className="card divide-y divide-zinc-200 dark:divide-zinc-800">
+    <ul className="card divide-y divide-border">
       {list.map((fix) => (
         <li key={fix.id}>
           <Link
             href={`/admin/projects/${project.id}/fixes/${fix.id}`}
-            className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
+            className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm hover:bg-surface-2"
           >
             <FixStatusBadge status={fix.status} />
             <span className="min-w-0 flex-1 truncate font-medium">{fix.title}</span>
-            <span className="font-mono text-xs text-zinc-500">{fix.filePath}</span>
-            <span className="text-xs text-zinc-500">
+            <span className="font-mono text-xs text-muted">{fix.filePath}</span>
+            <span className="text-xs text-muted">
               {fix.authorName} · {formatDateTime(fix.createdAt)}
             </span>
           </Link>

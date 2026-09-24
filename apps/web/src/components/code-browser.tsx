@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BookOpen, ChevronRight, CornerLeftUp, FileCode2, FileText, Folder, GitPullRequestArrow, FileDown } from "lucide-react";
 import { notFound } from "next/navigation";
 import type { Project } from "@foundry/db";
 import { readSnapshotFile, statPath, UnsafePathError, type PathInfo } from "@foundry/storage";
@@ -21,7 +22,7 @@ function Breadcrumbs({ slug, path }: { slug: string; path: string }) {
   const parts = path ? path.split("/") : [];
   return (
     <div className="mb-3 flex flex-wrap items-center gap-1 font-mono text-sm">
-      <Link href={`/p/${slug}`} className="link font-semibold">
+      <Link href={`/p/${slug}`} className="link">
         {slug}
       </Link>
       {parts.map((part, i) => {
@@ -29,9 +30,9 @@ function Breadcrumbs({ slug, path }: { slug: string; path: string }) {
         const last = i === parts.length - 1;
         return (
           <span key={sub} className="flex items-center gap-1">
-            <span className="text-zinc-400">/</span>
+            <ChevronRight className="size-3.5 text-muted" />
             {last ? (
-              <span>{part}</span>
+              <span className="font-semibold">{part}</span>
             ) : (
               <Link href={`/p/${slug}/tree/${encodePath(sub)}`} className="link">
                 {part}
@@ -44,20 +45,12 @@ function Breadcrumbs({ slug, path }: { slug: string; path: string }) {
   );
 }
 
-function FolderIcon() {
-  return (
-    <svg viewBox="0 0 16 16" className="size-4 fill-sky-500" aria-hidden>
-      <path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0 0 16 13.25v-8.5A1.75 1.75 0 0 0 14.25 3H7.5a.25.25 0 0 1-.2-.1l-.9-1.2C6.07 1.26 5.55 1 5 1H1.75Z" />
-    </svg>
-  );
-}
+const TEXT_EXT = /\.(md|markdown|txt|rst|adoc)$/i;
 
-function FileIcon() {
-  return (
-    <svg viewBox="0 0 16 16" className="size-4 fill-zinc-400" aria-hidden>
-      <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-.011-.013-2.914-2.914-.013-.011Z" />
-    </svg>
-  );
+function EntryIcon({ type, name }: { type: "file" | "dir"; name: string }) {
+  if (type === "dir") return <Folder className="size-4 shrink-0 fill-accent/20 text-accent" />;
+  if (TEXT_EXT.test(name)) return <FileText className="size-4 shrink-0 text-muted" />;
+  return <FileCode2 className="size-4 shrink-0 text-muted" />;
 }
 
 export async function CodeBrowser({ project, path }: { project: Project; path: string }) {
@@ -76,7 +69,7 @@ export async function CodeBrowser({ project, path }: { project: Project; path: s
       <div className="space-y-6">
         <div>
           <Breadcrumbs slug={project.slug} path={info.path} />
-          <div className="card divide-y divide-zinc-200 overflow-hidden dark:divide-zinc-800">
+          <div className="card divide-y divide-border overflow-hidden">
             {info.path && (
               <Link
                 href={
@@ -84,32 +77,33 @@ export async function CodeBrowser({ project, path }: { project: Project; path: s
                     ? `/p/${project.slug}/tree/${encodePath(info.path.split("/").slice(0, -1).join("/"))}`
                     : `/p/${project.slug}`
                 }
-                className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-muted transition hover:bg-surface-2"
               >
-                <span className="w-4" />
+                <CornerLeftUp className="size-4" />
                 ..
               </Link>
             )}
-            {info.entries.length === 0 && <p className="px-4 py-6 text-center text-sm text-zinc-500">Empty folder</p>}
+            {info.entries.length === 0 && <p className="px-4 py-6 text-center text-sm text-muted">Empty folder</p>}
             {info.entries.map((entry) => (
               <Link
                 key={entry.path}
                 href={`/p/${project.slug}/tree/${encodePath(entry.path)}`}
-                className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                className="group flex items-center gap-3 px-4 py-2.5 text-sm transition hover:bg-surface-2"
               >
-                {entry.type === "dir" ? <FolderIcon /> : <FileIcon />}
-                <span className="flex-1 truncate">{entry.name}</span>
-                {entry.type === "file" && <span className="text-xs text-zinc-500">{formatBytes(entry.size)}</span>}
+                <EntryIcon type={entry.type} name={entry.name} />
+                <span className="flex-1 truncate group-hover:text-accent">{entry.name}</span>
+                {entry.type === "file" && <span className="text-xs text-muted tabular-nums">{formatBytes(entry.size)}</span>}
               </Link>
             ))}
           </div>
         </div>
         {readmeFile && !readmeFile.binary && !readmeFile.tooLarge && (
           <div className="card">
-            <div className="border-b border-zinc-200 px-4 py-2 text-sm font-medium dark:border-zinc-800">
+            <div className="flex items-center gap-2 border-b border-border px-5 py-3 text-sm font-medium">
+              <BookOpen className="size-4 text-accent" />
               {readme!.name}
             </div>
-            <div className="p-6">
+            <div className="p-6 sm:p-8">
               {/\.txt$/i.test(readme!.name) ? (
                 <pre className="text-sm whitespace-pre-wrap">{readmeFile.text}</pre>
               ) : (
@@ -135,18 +129,24 @@ export async function CodeBrowser({ project, path }: { project: Project; path: s
     <div>
       <Breadcrumbs slug={project.slug} path={file.path} />
       <div className="card overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
-          <span className="text-xs text-zinc-500">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-surface-2/50 px-4 py-2.5">
+          <span className="flex items-center gap-2 text-xs text-muted">
+            <EntryIcon type="file" name={file.path} />
             {html ? `${lineCount} lines · ` : ""}
             {formatBytes(file.size)}
           </span>
           <div className="flex gap-2">
             {suggestable && (
-              <Link href={`/p/${project.slug}/fix?path=${encodeURIComponent(file.path)}`} className="btn btn-primary">
+              <Link
+                href={`/p/${project.slug}/fix?path=${encodeURIComponent(file.path)}`}
+                className="btn btn-primary btn-sm"
+              >
+                <GitPullRequestArrow className="size-3.5" />
                 Suggest a fix
               </Link>
             )}
-            <a href={rawHref} className="btn">
+            <a href={rawHref} className="btn btn-sm">
+              <FileDown className="size-3.5" />
               Raw
             </a>
           </div>
@@ -154,7 +154,7 @@ export async function CodeBrowser({ project, path }: { project: Project; path: s
         {html ? (
           <div className="code-view" dangerouslySetInnerHTML={{ __html: html }} />
         ) : (
-          <p className="px-4 py-10 text-center text-sm text-zinc-500">
+          <p className="px-4 py-12 text-center text-sm text-muted">
             {file.binary ? "Binary file not shown." : "File too large to display."}{" "}
             <a href={rawHref} className="link">
               Download it

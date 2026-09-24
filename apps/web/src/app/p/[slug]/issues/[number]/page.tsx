@@ -22,9 +22,9 @@ export default async function IssuePage({ params }: PageProps<"/p/[slug]/issues/
     <article className="max-w-3xl space-y-4">
       <div>
         <h2 className="text-xl font-semibold">
-          {issue.title} <span className="font-normal text-zinc-400">#{issue.number}</span>
+          {issue.title} <span className="font-normal text-muted">#{issue.number}</span>
         </h2>
-        <div className="mt-2 flex items-center gap-2 text-sm text-zinc-500">
+        <div className="mt-2 flex items-center gap-2 text-sm text-muted">
           <IssueStatusBadge status={issue.status} />
           opened by {issue.authorName} on {formatDateTime(issue.createdAt)}
         </div>

@@ -9,6 +9,7 @@ import { assertSafeId, normalizeRelativePath, resolveInside } from "./paths";
 
 export { guessContentType, isBinary } from "./files";
 export { normalizeRelativePath, UnsafePathError } from "./paths";
+export { deleteMedia, mediaSize, mediaStream, saveMedia, sniffMedia, type SniffedMedia } from "./media";
 
 export const LIMITS = {
   maxFiles: 20_000,
